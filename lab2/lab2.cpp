@@ -48,7 +48,7 @@ const wchar_t* Strings[rowNumber][columnNumber] =
     {L"Социал-демократов\n(большевики)", L"18", L"47(18)", L"7(12)", L"8(6)"},
     {L"Октябристов", L"16", L"32(или 44)", L"154", L"98"},
     {L"Кадетов", L"179", L"98", L"54", L"59"},
-    {L"Черносотенцев и правых", L"", L"", L"", L""},
+    {L"Черносотенцев и правых", L"14", L"22", L"50(97)", L"65(120)"},
     {L"Беспартийных", L"105", L"50", L"-", L"-"},
     {L"Прогрессистов", L"-", L"-", L"-", L"48"},
 };
@@ -200,7 +200,7 @@ void DrawTable(HWND hWnd)
 
     GetClientRect(hWnd, &wndRect);
 
-    int indent = 5;                                 // Отступ
+    int indent = 2;                                 // Отступ
     int columnSize = wndRect.right / columnNumber;  // Размер одной колонны
     int rowSize = wndRect.bottom / rowNumber;       // Размер одного ряда
     int maxRowHeight = 0;
@@ -235,11 +235,26 @@ void DrawTable(HWND hWnd)
             textRect.left = rect.left + indent;
             textRect.bottom = rect.bottom - indent;
 
+            static LOGFONT lf;                                
+            lf.lfCharSet = DEFAULT_CHARSET;
+            lf.lfPitchAndFamily = DEFAULT_PITCH;
+            strcpy_s((char *)lf.lfFaceName, _countof(lf.lfFaceName), "Times New Roman");
+            lf.lfHeight = 17;
+            lf.lfWidth = 10; 
+            lf.lfWeight = 30; 
+            lf.lfEscapement = 0;                          //шрифт без поворота
+
+            HFONT hFont = CreateFontIndirect(&lf);
+            SelectObject(hdc, hFont);
+
             DrawText(hdc, (LPCWSTR)Strings[i][j], -1, &textRect, DT_WORDBREAK | DT_CENTER);
+            DeleteObject(hFont);
+
             DrawLine(hdc, colorLine, rect.right, rect.top, rect.right, rect.bottom);
         }
         maxRowHeight += wndRect.bottom / rowNumber;
     }
+    DrawLine(hdc, colorLine, 0, maxRowHeight, wndRect.right, maxRowHeight);
 
     SetBkMode(hdc, OPAQUE);  // Переустанавить режим фона в состояние по умолчанию. 
     EndPaint(hWnd, &ps);
