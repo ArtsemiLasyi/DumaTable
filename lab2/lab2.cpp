@@ -227,6 +227,7 @@ void DrawTable(HWND hWnd)
             rect.left = columnSize * j;
             rect.right = wndRect.right / columnNumber * (j + 1);
 
+            DrawLine(hdc, colorLine, rect.left, rect.top, rect.left, rect.bottom);
             SetBkMode(hdc, TRANSPARENT);
             SetTextColor(hdc, colorText);
 
