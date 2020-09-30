@@ -22,6 +22,41 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+
+// Мои переменные
+const int rowNumber = 10;
+const int columnNumber = 5;
+
+const wchar_t* Strings[rowNumber][columnNumber] =
+{
+    {
+        L"Годы и номер",
+        L"I Дума апрель-июль 1906 года",
+        L"II Дума февраль-июнь 1907 года",
+        L"III Дума 1907-1912 годы",
+        L"IV Дума ноябрь 1912 - февраль 1917 года"
+    },
+    {
+       L"Председатели",
+       L"С.А. Муромцев",
+       L"Ф.А. Головин",
+       L"Н.А. Хомяков,\nА.И. Гучков",
+       L"М.В. Родзянко"
+    },
+    {L"Всего депутатов:", L"478", L"518", L"442", L"442" },
+    {L"Из них:\nЭсеров (трудовиков)", L"34(97)", L"37(104)", L"(14)", L"(10)"},
+    {L"Социал-демократов\n(большевики)", L"18", L"47(18)", L"7(12)", L"8(6)"},
+    {L"Октябристов", L"16", L"32(или 44)", L"154", L"98"},
+    {L"Кадетов", L"179", L"98", L"54", L"59"},
+    {L"Черносотенцев и правых", L"", L"", L"", L""},
+    {L"Беспартийных", L"105", L"50", L"-", L"-"},
+    {L"Прогрессистов", L"-", L"-", L"-", L"48"},
+};
+
+void DrawTable(HWND hWnd);
+
+void DrawLine(HDC hdc, COLORREF color, int x1, int y1, int x2, int y2);
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -138,10 +173,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         case WM_PAINT:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Добавьте сюда любой код прорисовки, использующий HDC...
-            EndPaint(hWnd, &ps);
+            DrawTable(hWnd);
         }
         break;
 
@@ -155,4 +187,71 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+
+void DrawTable(HWND hWnd)
+{
+    RECT wndRect;      // Прямоугольник окна
+    RECT rect;         // Прямоугольник ячейки таблицы
+    RECT textRect;     // Прямоугольник текста
+    PAINTSTRUCT ps;
+    HBRUSH brush;
+
+    GetClientRect(hWnd, &wndRect);
+
+    int indent = 5;                                 // Отступ
+    int columnSize = wndRect.right / columnNumber;  // Размер одной колонны
+    int rowSize = wndRect.bottom / rowNumber;       // Размер одного ряда
+    int maxRowHeight = 0;
+
+    
+    HDC hdc = BeginPaint(hWnd, &ps);
+    COLORREF colorText = RGB(255, 255, 255);    // Белый
+    COLORREF colorBack = RGB(20, 20, 20);       // Черный
+    COLORREF colorLine = RGB(255, 255, 0);      // Желтый
+
+    brush = CreateSolidBrush(colorBack);
+    SelectObject(hdc, brush);
+    Rectangle(hdc, wndRect.left, wndRect.top, wndRect.right, wndRect.bottom);   // Задний фон таблицы
+    DeleteObject(brush);
+
+    for (int i = 0; i < rowNumber; i++)
+    {
+        rect.top = maxRowHeight;
+        rect.bottom = wndRect.bottom / rowNumber * (i + 1);
+        DrawLine(hdc, colorLine, 0, maxRowHeight, wndRect.right, maxRowHeight);
+
+        for (int j = 0; j < columnNumber; j++)
+        {
+            rect.left = columnSize * j;
+            rect.right = wndRect.right / columnNumber * (j + 1);
+
+            SetBkMode(hdc, TRANSPARENT);
+            SetTextColor(hdc, colorText);
+
+            textRect.top = rect.top + indent;
+            textRect.right = rect.right - indent;
+            textRect.left = rect.left + indent;
+            textRect.bottom = rect.bottom - indent;
+
+            DrawText(hdc, (LPCWSTR)Strings[i][j], -1, &textRect, DT_WORDBREAK | DT_CENTER);
+            DrawLine(hdc, colorLine, rect.right, rect.top, rect.right, rect.bottom);
+        }
+        maxRowHeight += wndRect.bottom / rowNumber;
+    }
+
+    SetBkMode(hdc, OPAQUE);  // Переустанавить режим фона в состояние по умолчанию. 
+    EndPaint(hWnd, &ps);
+}
+
+// Нарисовать линию из точки 1 в точку 2
+void DrawLine(HDC hdc, COLORREF color, int x1, int y1, int x2, int y2)
+{
+    int width = 5;
+    HPEN pen = CreatePen(PS_INSIDEFRAME, width, color);
+    SelectObject(hdc, pen);
+    MoveToEx(hdc, x1, y1, NULL);   // Обновить позицию заданной точки и вернуть ее предыдущее значение
+    LineTo(hdc, x2, y2);          // Начертить линию
+    DeleteObject(pen);
 }
